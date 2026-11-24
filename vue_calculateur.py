@@ -346,5 +346,5 @@ def afficher(T):
                 msg = f"📋 *DEMANDE DEVIS SUR MESURE — ST-ECOPARVIS*\n\n📝 *Description du projet :*\n{description}"
                 st.success(T.get("envoyer_demande", "✅ Demande prête !"))
 st.markdown(f"[➡️ Envoyer la demande sur WhatsApp]({_lien_whatsapp(msg)})")
-            else:
+    else:
                 st.error(T.get("desc_vide", "Veuillez décrire votre projet."))
