@@ -1,4 +1,4 @@
-   """Page Calculateur & Devis : simulation, commande, reçu PDF, paiement, WhatsApp."""
+"""Page Calculateur & Devis : simulation, commande, reçu PDF, paiement, WhatsApp."""
 import base64
 import json
 import math
@@ -17,16 +17,14 @@ from recu_pdf import generer_recu_pdf
 from styles import motif_icon_html
 
 COULEUR_KEYS = ["rouge", "vert", "jaune", "gris", "violet", "bleu", "noir", "blanc", "orange"]
-COULEUR_CSS = {
-    "rouge": "#8B2500", "vert": "#2E7D32", "jaune": "#F9A825", "gris": "#424242",
-    "violet": "#6A1B9A", "bleu": "#1565C0", "noir": "#212121", "blanc": "#F5F5F5",
-    "orange": "#E65100", "naturel": "#5D4037", "melange": "#5D4037"
-}
+COULEUR_CSS = {"rouge": "#8B2500", "vert": "#2E7D32", "jaune": "#F9A825", "gris": "#424242",
+               "violet": "#6A1B9A", "bleu": "#1565C0", "noir": "#212121", "blanc": "#F5F5F5",
+               "orange": "#E65100", "naturel": "#5D4037", "melange": "#5D4037"}
 CARTE_DISPONIBLE = all(find_spec(m) for m in ("folium", "streamlit_folium", "shapely"))
 
 
 def _lien_whatsapp(texte):
-    return f"https://wa.me{config.WHATSAPP_LIEN}?text={urllib.parse.quote(texte)}"
+    return f"https://wa.me/{config.WHATSAPP_LIEN}?text={urllib.parse.quote(texte)}"
 
 
 def _drainage(T, type_pave, pluie):
@@ -45,13 +43,8 @@ def _surface_depuis_carte(T):
     from streamlit_folium import st_folium
 
     m = Map(location=[6.3654, 2.4183], zoom_start=13)
-    Draw(
-        export=False,
-        draw_options={
-            "polygon": True, "rectangle": True, "circle": False,
-            "marker": False, "polyline": False, "circlemarker": False
-        }
-    ).add_to(m)
+    Draw(export=False, draw_options={"polygon": True, "rectangle": True, "circle": False, "marker": False,
+                                     "polyline": False, "circlemarker": False}).add_to(m)
     resultat = st_folium(m, height=300, width=None)
     if resultat and resultat.get("last_active_drawing"):
         coords = resultat["last_active_drawing"]["geometry"]["coordinates"][0]
@@ -98,17 +91,10 @@ def _confirmation(T, c):
     """Affichée après la commande, et conservée même si la page se recharge."""
     st.success(T.get("commande_confirmee", "✅ Commande confirmée !").replace("Commande", f"Commande {c['numero']}"))
     st.info(T.get("repondrons", "📬 Nous vous répondrons sous 24h."))
-    st.download_button(
-        T.get("telecharger_recu", "📄 Télécharger mon reçu PDF"),
-        data=c["pdf"],
-        file_name=f"Recu_ST_Ecoparvis_{c['numero']}.pdf",
-        mime="application/pdf"
-    )
-    _bouton_partage_pdf(
-        c["pdf"],
-        f"Recu_ST_Ecoparvis_{c['numero']}.pdf",
-        f"Mon reçu ST-Ecoparvis N° {c['numero']} — {fcfa(c['montant_total'])}"
-    )
+    st.download_button(T.get("telecharger_recu", "📄 Télécharger mon reçu PDF"), data=c["pdf"],
+                       file_name=f"Recu_ST_Ecoparvis_{c['numero']}.pdf", mime="application/pdf")
+    _bouton_partage_pdf(c["pdf"], f"Recu_ST_Ecoparvis_{c['numero']}.pdf",
+                        f"Mon reçu ST-Ecoparvis N° {c['numero']} — {fcfa(c['montant_total'])}")
 
     st.markdown(f"### 💳 Procédez au paiement de **{fcfa(c['montant_total'])}**")
     for colonne, p in zip(st.columns(len(config.PAIEMENTS)), config.PAIEMENTS):
@@ -118,11 +104,9 @@ def _confirmation(T, c):
                 <p style="font-size:22px;font-weight:900;color:{p['texte']};margin:8px 0;">{p['numero']}</p>
                 <p style="color:{p['texte']};font-size:12px;margin:0;">Montant exact : <b>{fcfa(c['montant_total'])}</b></p>
             </div>""", unsafe_allow_html=True)
-    st.warning(
-        T.get("apres_paiement", "⚠️ Après paiement, envoyez votre capture de reçu sur WhatsApp.")
-        + " Le nom du titulaire affiché peut être différent de celui d'ST-Ecoparvis : "
-          "demandez-nous confirmation sur WhatsApp avant d'envoyer."
-    )
+    st.warning(T.get("apres_paiement", "⚠️ Après paiement, envoyez votre capture de reçu sur WhatsApp.")
+               + " Le nom du titulaire affiché peut être différent de celui d'ST-Ecoparvis : "
+                 "demandez-nous confirmation sur WhatsApp avant d'envoyer.")
 
     texte_wa = (
         f"♻️ *COMMANDE ST-ECOPARVIS — {c['numero']}*\n\n"
@@ -135,44 +119,35 @@ def _confirmation(T, c):
         f"💰 *TOTAL : {fcfa(c['montant_total'])}*\n\n📎 Je joins mon reçu PDF."
     )
     st.markdown(f"[{T.get('envoyer_wa', '➡️ Envoyer aussi sur WhatsApp')}]({_lien_whatsapp(texte_wa)})")
-    texte_partage = (
-        f"J'ai reçu un devis ST-Ecoparvis pour {c['surface']} m² — Montant : "
-        f"{fcfa(c['montant_total'])}. N° commande : {c['numero']}"
-    )
-    st.markdown(f"[📤 {T['partager']}](https://wa.me?text={urllib.parse.quote(texte_partage)})")
+    texte_partage = (f"J'ai reçu un devis ST-Ecoparvis pour {c['surface']} m² — Montant : "
+                     f"{fcfa(c['montant_total'])}. N° commande : {c['numero']}")
+    st.markdown(f"[📤 {T['partager']}](https://wa.me/?text={urllib.parse.quote(texte_partage)})")
     st.caption(f"🔖 Gardez votre n° de commande **{c['numero']}** : il sert à retrouver votre devis dans « Mon historique ».")
     st.button("🔄 Nouvelle commande", on_click=_nouvelle_commande)
 
 
 def afficher(T):
-    # Initialisation sécurisée de l'état de session
-    if "etape" not in st.session_state:
-        st.session_state.etape = 0
-
     # ── Barre de progression
-    etape_active = st.session_state.etape
+    etape_active = st.session_state.get("etape", 0)
     html = '<div class="progress-bar">'
     for i, e in enumerate(T["progression"]):
         cls, ico = ("done", "✅") if i < etape_active else (("active", "🔵") if i == etape_active else ("inactive", "⚪"))
         html += f'<div class="prog-step {cls}">{ico}<br>{e}</div>'
     st.markdown(html + "</div>", unsafe_allow_html=True)
 
-    st.markdown(
-        f'<div class="section-title">{T.get("simulateur_titre", "🧮 Simulateur de Commande")}</div>',
-        unsafe_allow_html=True
-    )
+    st.markdown(f'<div class="section-title">{T.get("simulateur_titre", "🧮 Simulateur de Commande")}</div>',
+                unsafe_allow_html=True)
     col1, col2 = st.columns(2)
- # ── Colonne de gauche : les choix du client
+
+    # ── Colonne de gauche : les choix du client
     with col1:
         st.subheader(T.get("parametres", "🧱 Paramètres"))
 
         st.markdown(f"#### {T['superficie_titre']}")
         surface = None
         if CARTE_DISPONIBLE:
-            mode = st.radio(
-                T["superficie_titre"], [T["manuelle"], T["carte"]],
-                horizontal=True, label_visibility="collapsed"
-            )
+            mode = st.radio(T["superficie_titre"], [T["manuelle"], T["carte"]], horizontal=True,
+                            label_visibility="collapsed")
             if mode == T["carte"]:
                 st.info(T["carte_info"])
                 try:
@@ -183,38 +158,25 @@ def afficher(T):
             surface = st.number_input(T["surface_label"], min_value=1.0, value=10.0, step=1.0)
         st.session_state.etape = max(st.session_state.etape, 1)
 
-        types_pave = {
-            "drainant": T["pave_drainant"],
-            "autobloquant": T["pave_autobloquant"],
-            "haute_res": T["pave_haute_res"]
-        }
+        types_pave = {"drainant": T["pave_drainant"], "autobloquant": T["pave_autobloquant"],
+                      "haute_res": T["pave_haute_res"]}
         type_pave = st.selectbox(T["type_pave_label"], list(types_pave), format_func=lambda k: types_pave[k])
 
         projet_touristique = T.get("projet_touristique", "Site touristique / Patrimoine")
-        type_projet = st.selectbox(
-            T.get("type_projet_label", "🏛️ Type de projet"),
-            [
-                T.get("projet_residentiel", "Résidentiel / Particulier"),
-                projet_touristique,
-                T.get("projet_municipal", "Voirie municipale")
-            ]
-        )
+        type_projet = st.selectbox(T.get("type_projet_label", "🏛️ Type de projet"),
+                                   [T.get("projet_residentiel", "Résidentiel / Particulier"),
+                                    projet_touristique,
+                                    T.get("projet_municipal", "Voirie municipale")])
         if type_projet == projet_touristique:
-            st.markdown(
-                f'<div class="color-notice">🏛️ {T.get("suggestion_touristique", "Pour un site touristique, nous recommandons un motif personnalisé inspiré du patrimoine local.")}</div>',
-                unsafe_allow_html=True
-            )
+            st.markdown(f'<div class="color-notice">🏛️ {T.get("suggestion_touristique", "Pour un site touristique, nous recommandons un motif personnalisé inspiré du patrimoine local.")}</div>',
+                        unsafe_allow_html=True)
 
         # Forme
         st.markdown(f"#### {T['forme_titre']}")
-        formes = {
-            "carre": T["carré"], "rectangle": T["rectangle"], "hexagone": T["hexagone"],
-            "hisz": T["hisz"], "perso": T["perso_forme"]
-        }
-        forme_choisie = st.selectbox(
-            T["forme_titre"], list(formes), format_func=lambda k: formes[k],
-            label_visibility="collapsed"
-        )
+        formes = {"carre": T["carré"], "rectangle": T["rectangle"], "hexagone": T["hexagone"],
+                  "hisz": T["hisz"], "perso": T["perso_forme"]}
+        forme_choisie = st.selectbox(T["forme_titre"], list(formes), format_func=lambda k: formes[k],
+                                     label_visibility="collapsed")
         supplement_forme = config.SUPPL_FORMES[forme_choisie]
         forme_label = formes[forme_choisie].split("(")[0].strip()
 
@@ -227,25 +189,19 @@ def afficher(T):
 
         option_motif = st.radio(T["motif_titre"], [T["motif_std"], T["motif_perso"]], label_visibility="collapsed")
         if option_motif == T["motif_std"]:
-            motif_choisi = st.selectbox(
-                T["motif_titre"], list(config.MOTIFS), format_func=_motif_label,
-                label_visibility="collapsed"
-            )
+            motif_choisi = st.selectbox(T["motif_titre"], list(config.MOTIFS), format_func=_motif_label,
+                                        label_visibility="collapsed")
             supplement_motif = config.MOTIFS[motif_choisi][1]
             motif_label = _motif_label(motif_choisi)
-            st.markdown(
-                f'<div style="display:flex;align-items:center;gap:8px;margin:-6px 0 8px 4px;">{motif_icon_html(motif_choisi)}<span style="font-size:12px;color:#777;">{motif_label}</span></div>',
-                unsafe_allow_html=True
-            )
+            st.markdown(f'<div style="display:flex;align-items:center;gap:8px;margin:-6px 0 8px 4px;">{motif_icon_html(motif_choisi)}<span style="font-size:12px;color:#777;">{motif_label}</span></div>',
+                        unsafe_allow_html=True)
         else:
             motif_choisi = "perso"
             supplement_motif = config.SUPPL_MOTIF_PERSO
             motif_label = T["motif_perso"]
             st.markdown(f'<div class="color-notice">{T["motif_perso_info"]}</div>', unsafe_allow_html=True)
-            photo_motif = st.file_uploader(
-                "📸 Téléchargez votre photo de motif (optionnel)",
-                type=["jpg", "jpeg", "png", "webp"], key="photo_motif"
-            )
+            photo_motif = st.file_uploader("📸 Téléchargez votre photo de motif (optionnel)",
+                                           type=["jpg", "jpeg", "png", "webp"], key="photo_motif")
             if photo_motif:
                 st.image(photo_motif, caption="Votre motif personnalisé", width=200)
                 st.success("✅ Photo reçue ! Envoyez-la aussi sur WhatsApp avec votre commande.")
@@ -259,29 +215,21 @@ def afficher(T):
             supplement_couleur = config.SUPPL_COULEUR_UNIE
             couleur_choisie = st.selectbox(T["couleurs_dispo"], COULEUR_KEYS, format_func=lambda k: couleur_labels[k])
             couleur_label = couleur_labels[couleur_choisie]
-            st.markdown(
-                f'<div class="color-notice">⚠️ Supplément : <b>+{supplement_couleur} FCFA/m²</b></div>',
-                unsafe_allow_html=True
-            )
+            st.markdown(f'<div class="color-notice">⚠️ Supplément : <b>+{supplement_couleur} FCFA/m²</b></div>',
+                        unsafe_allow_html=True)
         elif option_couleur == T["melange"]:
             nb_couleurs = st.slider(T["nb_couleurs"], 2, 5, 2)
             supplement_couleur = nb_couleurs * config.SUPPL_PAR_COULEUR_MELANGE
-            choisies = st.multiselect(
-                T["couleurs_dispo"], COULEUR_KEYS, format_func=lambda k: couleur_labels[k],
-                max_selections=nb_couleurs
-            )
+            choisies = st.multiselect(T["couleurs_dispo"], COULEUR_KEYS, format_func=lambda k: couleur_labels[k],
+                                      max_selections=nb_couleurs)
             couleur_choisie = choisies[0] if choisies else "melange"
             couleur_label = " + ".join(couleur_labels[c] for c in choisies) if choisies else T["melange"]
-            st.markdown(
-                f'<div class="color-notice">🎨 {nb_couleurs} couleurs → <b>+{supplement_couleur} FCFA/m²</b></div>',
-                unsafe_allow_html=True
-            )
+            st.markdown(f'<div class="color-notice">🎨 {nb_couleurs} couleurs → <b>+{supplement_couleur} FCFA/m²</b></div>',
+                        unsafe_allow_html=True)
 
         # Livraison et pluie
-        zones = {
-            "cotonou": T["cotonou"], "porto": T["porto"], "abomey": T["abomey"],
-            "parakou": T["parakou"], "retrait": T["retrait"]
-        }
+        zones = {"cotonou": T["cotonou"], "porto": T["porto"], "abomey": T["abomey"],
+                 "parakou": T["parakou"], "retrait": T["retrait"]}
         zone = st.selectbox(T["zone_label"], list(zones), format_func=lambda k: zones[k])
         zone_label = zones[zone]
         pluies = {"faible": T["faible"], "moderee": T["moderee"], "forte": T["forte"]}
@@ -352,3 +300,51 @@ def afficher(T):
         if economie > 0:
             st.markdown(f'<div style="color:#ffffff;background:linear-gradient(135deg,#2E7D32,#4CAF50);padding:16px;border-radius:12px;"><span style="font-size:18px;font-weight:900;">{T["economie_label"]} : {fcfa(economie)} 🎉</span></div>', unsafe_allow_html=True)
         else:
+            st.markdown(f'<div style="color:#ffffff;background:linear-gradient(135deg,#2E7D32,#4CAF50);padding:16px;border-radius:12px;"><span style="font-size:16px;font-weight:700;">{T["economie_label"]} : Prix compétitif ✅</span></div>', unsafe_allow_html=True)
+    st.session_state.etape = max(st.session_state.etape, 2)
+
+    # ── Commande
+    st.markdown(f'<div class="section-title">📩 {T["commander_label"]}</div>', unsafe_allow_html=True)
+    if st.session_state.get("commande"):
+        _confirmation(T, st.session_state.commande)
+    else:
+        c1, c2 = st.columns(2)
+        nom_client = c1.text_input(T["nom_label"])
+        contact = c2.text_input(T["contact_label"])
+        if st.button(T["btn_wa"]):
+            if not nom_client or not contact:
+                st.error(T.get("nom_contact_requis", "Veuillez remplir votre nom et votre contact."))
+            elif not contact_valide(contact):
+                st.error("📞 Le numéro de contact ne semble pas valide — utilisez uniquement des chiffres (8 à 15), avec ou sans indicatif (+229...).")
+            else:
+                nom_client, contact = nom_client.strip(), contact.strip()
+                numero = database.creer_devis(nom_client, contact, types_pave[type_pave], surface, zone_label,
+                                              couleur_label, forme_label, motif_label, montant_total,
+                                              total_plastique, max(economie, 0))
+                envoyer_email_notification(nom_client, contact, types_pave[type_pave], surface,
+                                           montant_total, zone_label, numero)
+                pdf = generer_recu_pdf(numero, nom_client, contact, types_pave[type_pave], surface, zone_label,
+                                       couleur_label, forme_label, motif_label, montant_total, total_plastique,
+                                       max(economie, 0), frais, montant_paves).getvalue()
+                st.session_state.commande = {
+                    "numero": numero, "nom": nom_client, "contact": contact, "zone": zone_label,
+                    "type_projet": type_projet, "type_pave": types_pave[type_pave], "forme": forme_label,
+                    "motif": motif_label, "couleur": couleur_label, "surface": surface,
+                    "plastique": total_plastique, "montant_paves": montant_paves, "frais": frais,
+                    "montant_total": montant_total, "pdf": pdf}
+                st.session_state.etape = 3
+                st.rerun()
+
+    # ── Devis sur mesure
+    st.markdown("---")
+    with st.expander(f"📋 {T['devis_complexe']}"):
+        st.write(T["devis_complexe_info"])
+        description = st.text_area(T.get("decrire_projet", "Décrivez votre projet :"),
+                                   placeholder=T.get("placeholder_projet", "Ex: Route courbe 200m..."))
+        if st.button(T["devis_complexe_btn"]):
+            if description:
+                msg = f"📋 *DEMANDE DEVIS SUR MESURE — ST-ECOPARVIS*\n\n📝 *Description du projet :*\n{description}"
+                st.success(T.get("envoyer_demande", "✅ Demande prête !"))
+                st.markdown(f"[➡️ Envoyer la demande sur WhatsApp]({_lien_whatsapp(msg)})")
+            else:
+                st.error(T.get("desc_vide", "Veuillez décrire votre projet."))
